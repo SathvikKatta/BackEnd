@@ -1,6 +1,6 @@
 import requests
 import google.generativeai as genai
-from flask import Flask
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -103,7 +103,8 @@ def analyze_with_gemini(info_text, is_food=True):
     return response.text.strip()
 
 @app.route('/main', methods=['POST'])
-def main(upc_code):
+def main_method():
+    upc_code = request.json.get('input')
     print(f"🔎 Looking up UPC: {upc_code}")
     title = get_product_title_from_upc(upc_code)
     if not title:
@@ -126,7 +127,11 @@ def main(upc_code):
         gemini_output = analyze_with_gemini(medicine_info, is_food=False)
 
     print("\nGemini Analysis:\n", gemini_output)
+    return jsonify({"result": gemini_output})
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 
 # === RUN ===
-main("016000141544")  # Replace with any UPC code
+# main("016000141544")  # Replace with any UPC code
