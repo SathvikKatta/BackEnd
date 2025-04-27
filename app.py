@@ -162,10 +162,9 @@ def main_method():
     nutrition_info = get_nutrition_info(title, USDA_API_KEY)
     if nutrition_info:
         print("Nutrition Info Found:\n", nutrition_info, "\n")
-        analysis, rating = analyze_with_gemini(nutrition_info, is_food=True)
+        gemini_output = analyze_with_gemini(nutrition_info, is_food=True)
     else:
         print("Nutrition info not found. Checking medicine database...\n")
->>>>>>> 7943035 (rating implemented)
         medicine_info = get_medicine_info(title)
         if nutrition_info:
             print("Nutrition Info Found:\n", nutrition_info, "\n")
@@ -189,10 +188,9 @@ def main_method():
 >>>>>>> 7943035 (rating implemented)
 
     print("\nGemini Analysis:\n", gemini_output)
-    return jsonify({"product_title": title,
-                    "nutrition_info": nutrition_info,
-                    "analysis": analysis,
-                    "rating": rating})
+    return jsonify({"gemini_output": gemini_output,
+                    "product_title": title,
+                    "nutrition_info": nutrition_info})
 
 if __name__ == '__main__':
     app.run(debug=True)
