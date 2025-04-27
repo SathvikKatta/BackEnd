@@ -7,9 +7,10 @@ app = Flask(__name__)
 CORS(app)
 
 # === CONFIGURATION ===
+GEMINI_API_KEY = "AIzaSyBdc2_cVuSgGXyoTbVNPnrOcY4ooeZAG1c"
 UPC_API_URL = "https://api.upcitemdb.com/prod/trial/lookup"
 USDA_API_KEY = "GhkIxCiYKlUO2usa4lfiepZ7EFW1imkDNTxaO1Xv"
-GEMINI_API_KEY = "AIzaSyBz7vzeI6jvS28Lh8LXUb8JJlSadjOoMTQ"
+
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel(model_name="models/gemini-1.5-pro-latest")
 
@@ -117,7 +118,7 @@ def analyze_with_gemini(info_text, is_food=True):
 @app.route('/main', methods=['POST'])
 def main_method():
     upc_code = request.json.get('input')
-    print(f"Looking up UPC: {upc_code}")
+    print(f"🔎 Looking up UPC: {upc_code}")
     title = get_product_title_from_upc(upc_code)
     if not title:
         print("Product not found for this UPC.")
