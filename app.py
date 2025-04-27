@@ -1,20 +1,10 @@
 import requests
-import base64
 import google.generativeai as genai
-import pytesseract
-from PIL import Image
-from io import BytesIO
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
-
-# Set the path to the server Tesseract-OCR executable
-# pytesseract.pytesseract.tesseract_cmd = 'C:/Program Files/Tesseract-OCR/tesseract.exe'
-
-# Test script to check if the Tesseract-OCR is working
-# print(pytesseract.image_to_string(Image.open('app\\routed_image.png')))
 
 # === CONFIGURATION ===
 UPC_API_URL = "https://api.upcitemdb.com/prod/trial/lookup"
@@ -102,24 +92,9 @@ def get_medicine_info(brand_name):
     if "results"  not in data:
         return None
 
-def get_from_ocr(base64_img):
-    image_data = base64_img['image']
-    image_data = image_data.split(',')[1]
 
-    decoded_image = base64.b64decode(image_data)
-    image = Image.open(BytesIO(decoded_image))
-
-    return pytesseract.image_to_string(image)
-
-def analyze_with_gemini(info_text, is_food, is_med):
+def analyze_with_gemini(info_text, is_food=True):
     if is_food:
-<<<<<<< HEAD
-        prompt = f"Given the following product and its nutritional information, list 3 pros and 3 cons of eating it:\n\n{info_text}"
-    elif is_med:
-        prompt = f"Based on this medicine label, give a short summary and tell which foods or drugs should not be taken with it:\n\n{info_text}"
-    else:
-        prompt = f"Given the following information, if it is an ingredient list and/or nutrition information, list 3 pros and 3 cons of consuming this food. If it is a medicinal description, give a short summary and tell which foods or drugs should not be taken with it:\n\n{info_text}"
-=======
         prompt = ( 
             f"Given the following product and its nutritional information, "
             f"list 3 pros and 3 cons of eating it. Also give a short summary phrase. The pros should be formatted like **Pros of [product_name]**, and then list the pros. The cons should be formatted like **Cons of [product_name]**, and then list the cons \n{info_text}" 
@@ -132,7 +107,6 @@ def analyze_with_gemini(info_text, is_food, is_med):
         )
         rating = f"Given the following medicine and its nutrition infomation. Write a short phase like, 'like Safe', 'Use with caution', etc. and rate it out of 5:\n{info_text}"
 
->>>>>>> 7943035 (rating implemented)
 
     response = model.generate_content(prompt)
     rating = model.generate_content(rating)
@@ -142,16 +116,8 @@ def analyze_with_gemini(info_text, is_food, is_med):
 
 @app.route('/main', methods=['POST'])
 def main_method():
-<<<<<<< HEAD
-    code = request.json.get('input')
-    print(f"🔎 Looking up UPC: {code}")
-    title = get_product_title_from_upc(code)
-    if title:
-        print(f"Product title found: {title}\n")
-        nutrition_info = get_nutrition_info(title, USDA_API_KEY)
-=======
     upc_code = request.json.get('input')
-    print(f"🔎 Looking up UPC: {upc_code}")
+    print(f"Looking up UPC: {upc_code}")
     title = get_product_title_from_upc(upc_code)
     if not title:
         print("Product not found for this UPC.")
@@ -162,38 +128,25 @@ def main_method():
     nutrition_info = get_nutrition_info(title, USDA_API_KEY)
     if nutrition_info:
         print("Nutrition Info Found:\n", nutrition_info, "\n")
-        gemini_output = analyze_with_gemini(nutrition_info, is_food=True)
+        analysis, rating = analyze_with_gemini(nutrition_info, is_food=True)
     else:
         print("Nutrition info not found. Checking medicine database...\n")
         medicine_info = get_medicine_info(title)
-        if nutrition_info:
-            print("Nutrition Info Found:\n", nutrition_info, "\n")
-            gemini_output = analyze_with_gemini(nutrition_info, is_food=True, is_med=False)
-        elif medicine_info:
-            print("Medicine Info Found:\n", medicine_info, "\n")
-            gemini_output = analyze_with_gemini(medicine_info, is_food=False, is_med=True)
-    else:
-        # TODO: Replace with actual image data once Expo capture completed
-        ocr_info  = get_from_ocr(base64_img=request.json)
-        if (ocr_info.length > 0):
-            print("OCR Info Found:\n", ocr_info, "\n")
-            gemini_output = analyze_with_gemini(ocr_info, is_food=False, is_med=False)
-        else:
-            print("No information found from OCR.")
+        if not medicine_info:
+            print("No medicine info found either.")
             return
-<<<<<<< HEAD
-=======
         print("Medicine Info Found:\n", medicine_info, "\n")
         analysis, rating = analyze_with_gemini(nutrition_info, is_food=True)
->>>>>>> 7943035 (rating implemented)
 
-    print("\nGemini Analysis:\n", gemini_output)
-    return jsonify({"gemini_output": gemini_output,
-                    "product_title": title,
-                    "nutrition_info": nutrition_info})
+    print("\nAnalysis:\n")
+    return jsonify({"product_title": title,
+                    "nutrition_info": nutrition_info,
+                    "analysis": analysis,
+                    "rating": rating})
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 # === RUN ===
